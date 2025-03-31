@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Competencia CrossFit</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #e74c3c;
+            margin-bottom: 30px;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #f1f1f1;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
+            transition: all 0.3s;
+        }
+        .tab:hover {
+            background-color: #ddd;
+        }
+        .tab.active {
+            background-color: #e74c3c;
+            color: white;
+            border-color: #e74c3c;
+        }
+        .tab-content {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #e74c3c;
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+        tr:nth-child(even):not(.category-header) {
+            background-color: #f9f9f9;
+        }
+        tr:hover:not(.category-header) {
+            background-color: #f1f1f1;
+        }
+        .category-header {
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #777;
+        }
+        .error {
+            color: #e74c3c;
+            text-align: center;
+            padding: 20px;
+        }
+        select {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Competencia CrossFit</h1>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="leaderboard">Leaderboard</div>
+            <div class="tab" data-tab="wod1">WOD 1</div>
+            <div class="tab" data-tab="wod2">WOD 2</div>
+            <div class="tab" data-tab="wod2-1">WOD 2.1</div>
+            <div class="tab" data-tab="wod3">WOD 3</div>
+            <div class="tab" data-tab="wod4">WOD 4</div>
+        </div>
+        
+        <div class="tab-content active" id="leaderboard">
+            <div class="loading">Cargando datos del leaderboard...</div>
+        </div>
+        
+        <div class="tab-content" id="wod1">
+            <div class="loading">Cargando datos del WOD 1...</div>
+        </div>
+        
+        <div class="tab-content" id="wod2">
+            <div class="loading">Cargando datos del WOD 2...</div>
+        </div>
+        
+        <div class="tab-content" id="wod2-1">
+            <div class="loading">Cargando datos del WOD 2.1...</div>
+        </div>
+        
+        <div class="tab-content" id="wod3">
+            <div class="loading">Cargando datos del WOD 3...</div>
+        </div>
+        
+        <div class="tab-content" id="wod4">
+            <div class="loading">Cargando datos del WOD 4...</div>
+        </div>
+    </div>
+
+    <script>
+        // Endpoints configuration
+        const endpoints = {
+            leaderboard: "https://gsx2json.com/api?id=1t73XqwwZIfiDtMgHaSuGXNTmbTRhsPiG1Iecv9Ddb7U&columns=false&sheet=Leaderboard",
+            wod1: "https://gsx2json.com/api?id=1t73XqwwZIfiDtMgHaSuGXNTmbTRhsPiG1Iecv9Ddb7U&columns=false&sheet=Wod%201",
+            wod2: "https://gsx2json.com/api?id=1t73XqwwZIfiDtMgHaSuGXNTmbTRhsPiG1Iecv9Ddb7U&columns=false&sheet=Wod%202",
+            "wod2-1": "https://gsx2json.com/api?id=1t73XqwwZIfiDtMgHaSuGXNTmbTRhsPiG1Iecv9Ddb7U&columns=false&sheet=Wod%202.1",
+            wod3: "https://gsx2json.com/api?id=1t73XqwwZIfiDtMgHaSuGXNTmbTRhsPiG1Iecv9Ddb7U&columns=false&sheet=Wod%203",
+            wod4: "https://gsx2json.com/api?id=1t73XqwwZIfiDtMgHaSuGXNTmbTRhsPiG1Iecv9Ddb7U&columns=false&sheet=Wod%204"
+        };
+
+        // Tab functionality
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and content
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding content
+                tab.classList.add('active');
+                const tabId = tab.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+                
+                // Load data if not already loaded
+                if (!document.getElementById(tabId).hasAttribute('data-loaded')) {
+                    loadData(tabId);
+                }
+            });
+        });
+
+        // Load data for the active tab initially
+        loadData('leaderboard');
+
+        // Function to load data from API
+        function loadData(tabId) {
+            const endpoint = endpoints[tabId];
+            const contentDiv = document.getElementById(tabId);
+            
+            fetch(endpoint)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error en la respuesta de la API');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    contentDiv.innerHTML = ''; // Clear loading message
+                    
+                    // Add category filter if it's the leaderboard
+                    if (tabId === 'leaderboard') {
+                        addCategoryFilter(data.rows, contentDiv, tabId);
+                    }
+                    
+                    // Process and display data based on tab
+                    switch(tabId) {
+                        case 'leaderboard':
+                            displayLeaderboard(data.rows, contentDiv);
+                            break;
+                        case 'wod1':
+                            displayWod1(data.rows, contentDiv);
+                            break;
+                        case 'wod2':
+                            displayWod2(data.rows, contentDiv);
+                            break;
+                        case 'wod2-1':
+                            displayWod21(data.rows, contentDiv);
+                            break;
+                        case 'wod3':
+                            displayWod3(data.rows, contentDiv);
+                            break;
+                        case 'wod4':
+                            displayWod4(data.rows, contentDiv);
+                            break;
+                    }
+                    
+                    // Mark as loaded
+                    contentDiv.setAttribute('data-loaded', 'true');
+                })
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                    contentDiv.innerHTML = `<div class="error">Error al cargar los datos: ${error.message}</div>`;
+                });
+        }
+
+        // Add category filter dropdown
+        function addCategoryFilter(data, container, tabId) {
+            // Get unique categories
+            const categories = [...new Set(data.map(item => item.CATEGORIA))].sort();
+            
+            const filterDiv = document.createElement('div');
+            filterDiv.innerHTML = `
+                <label for="category-filter">Filtrar por categoría: </label>
+                <select id="category-filter">
+                    <option value="all">Todas las categorías</option>
+                    ${categories.map(cat => `<option value="${cat}">${cat}</option>`).join('')}
+                </select>
+            `;
+            container.appendChild(filterDiv);
+            
+            // Add event listener for filter
+            document.getElementById('category-filter').addEventListener('change', function() {
+                const selectedCategory = this.value;
+                const table = container.querySelector('table');
+                
+                if (selectedCategory === 'all') {
+                    // Show all rows
+                    table.querySelectorAll('tr').forEach(row => {
+                        row.style.display = '';
+                    });
+                } else {
+                    // Show only rows with matching category
+                    table.querySelectorAll('tr').forEach(row => {
+                        if (row.classList.contains('category-header')) {
+                            // Always show category headers
+                            row.style.display = row.textContent.includes(selectedCategory) ? '' : 'none';
+                        } else {
+                            const rowCategory = row.getAttribute('data-category');
+                            row.style.display = rowCategory === selectedCategory ? '' : 'none';
+                        }
+                    });
+                }
+            });
+        }
+
+        // Display leaderboard data
+        function displayLeaderboard(data, container) {
+            // Group by category
+            const groupedData = {};
+            data.forEach(item => {
+                if (!groupedData[item.CATEGORIA]) {
+                    groupedData[item.CATEGORIA] = [];
+                }
+                groupedData[item.CATEGORIA].push(item);
+            });
+            
+            // Create table
+            const table = document.createElement('table');
+            
+            // Table header
+            const thead = document.createElement('thead');
+            thead.innerHTML = `
+                <tr>
+                    <th>PUESTO</th>
+                    <th>EQUIPO</th>
+                    <th>CATEGORÍA</th>
+                    <th>WOD 1</th>
+                    <th>WOD 2</th>
+                    <th>WOD 2.1</th>
+                    <th>WOD 3</th>
+                    <th>WOD 4</th>
+                    <th>TOTAL</th>
+                </tr>
+            `;
+            table.appendChild(thead);
+            
+            // Table body
+            const tbody = document.createElement('tbody');
+            
+            // Add data for each category
+            for (const category in groupedData) {
+                // Category header
+                const headerRow = document.createElement('tr');
+                headerRow.className = 'category-header';
+                headerRow.innerHTML = `<td colspan="9">${category}</td>`;
+                tbody.appendChild(headerRow);
+                
+                // Teams in this category
+                groupedData[category].forEach(team => {
+                    const row = document.createElement('tr');
+                    row.setAttribute('data-category', category);
+                    row.innerHTML = `
+                        <td>${team.PUESTO}</td>
+                        <td>${team.TEAM}</td>
+                        <td>${team.CATEGORIA}</td>
+                        <td>${team['WOD 1'] || 0}</td>
+                        <td>${team['WOD 2'] || 0}</td>
+                        <td>${team['WOD 2.1'] || 0}</td>
+                        <td>${team['WOD 3'] || 0}</td>
+                        <td>${team['WOD 4'] || 0}</td>
+                        <td><strong>${team.TOTAL || 0}</strong></td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+            
+            table.appendChild(tbody);
+            container.appendChild(table);
+        }
+
+        // Display WOD 1 data
+        function displayWod1(data, container) {
+            // Group by category
+            const groupedData = {};
+            data.forEach(item => {
+                if (!groupedData[item.CATEGORIA]) {
+                    groupedData[item.CATEGORIA] = [];
+                }
+                groupedData[item.CATEGORIA].push(item);
+            });
+            
+            // Create table
+            const table = document.createElement('table');
+            
+            // Table header
+            const thead = document.createElement('thead');
+            thead.innerHTML = `
+                <tr>
+                    <th>PUESTO</th>
+                    <th>EQUIPO</th>
+                    <th>CATEGORÍA</th>
+                    <th>TIEMPO</th>
+                    <th>TIEBREAK</th>
+                    <th>PUNTOS</th>
+                </tr>
+            `;
+            table.appendChild(thead);
+            
+            // Table body
+            const tbody = document.createElement('tbody');
+            
+            // Add data for each category
+            for (const category in groupedData) {
+                // Category header
+                const headerRow = document.createElement('tr');
+                headerRow.className = 'category-header';
+                headerRow.innerHTML = `<td colspan="6">${category}</td>`;
+                tbody.appendChild(headerRow);
+                
+                // Teams in this category
+                groupedData[category].forEach(team => {
+                    const row = document.createElement('tr');
+                    row.setAttribute('data-category', category);
+                    row.innerHTML = `
+                        <td>${team.PUESTO}</td>
+                        <td>${team.TEAM}</td>
+                        <td>${team.CATEGORIA}</td>
+                        <td>${formatTime(team['TIEMPO '])}</td>
+                        <td>${formatTime(team.TIEBREAK)}</td>
+                        <td>${team.PUNTOS || 0}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+            
+            table.appendChild(tbody);
+            container.appendChild(table);
+        }
+
+        // Display WOD 2 data
+        function displayWod2(data, container) {
+            // Group by category
+            const groupedData = {};
+            data.forEach(item => {
+                if (!groupedData[item.CATEGORIA]) {
+                    groupedData[item.CATEGORIA] = [];
+                }
+                groupedData[item.CATEGORIA].push(item);
+            });
+            
+            // Create table
+            const table = document.createElement('table');
+            
+            // Table header
+            const thead = document.createElement('thead');
+            thead.innerHTML = `
+                <tr>
+                    <th>PUESTO</th>
+                    <th>EQUIPO</th>
+                    <th>CATEGORÍA</th>
+                    <th>REPS AMRAP 1</th>
+                    <th>PUNTOS A1</th>
+                    <th>REPS AMRAP 2</th>
+                    <th>PUNTOS A2</th>
+                    <th>REPS AMRAP 3</th>
+                    <th>PUNTOS A3</th>
+                    <th>TOTAL PUNTOS</th>
+                </tr>
+            `;
+            table.appendChild(thead);
+            
+            // Table body
+            const tbody = document.createElement('tbody');
+            
+            // Add data for each category
+            for (const category in groupedData) {
+                // Category header
+                const headerRow = document.createElement('tr');
+                headerRow.className = 'category-header';
+                headerRow.innerHTML = `<td colspan="10">${category}</td>`;
+                tbody.appendChild(headerRow);
+                
+                // Teams in this category
+                groupedData[category].forEach(team => {
+                    const row = document.createElement('tr');
+                    row.setAttribute('data-category', category);
+                    row.innerHTML = `
+                        <td>${team.PUESTO || '-'}</td>
+                        <td>${team.TEAM}</td>
+                        <td>${team.CATEGORIA}</td>
+                        <td>${team['REPS AMRAP 1'] || 0}</td>
+                        <td>${team['PUNTOS A1'] || 0}</td>
+                        <td>${team['REPS AMRAP 2'] || 0}</td>
+                        <td>${team['PUNTOS A2'] || 0}</td>
+                        <td>${team['REPS AMRAP 3'] || 0}</td>
+                        <td>${team['PUNTOS A3'] || 0}</td>
+                        <td><strong>${team['TOTAL PUNTOS'] || 0}</strong></td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+            
+            table.appendChild(tbody);
+            container.appendChild(table);
+        }
+
+        // Display WOD 2.1 data
+        function displayWod21(data, container) {
+            // Group by category
+            const groupedData = {};
+            data.forEach(item => {
+                if (!groupedData[item.CATEGORIA]) {
+                    groupedData[item.CATEGORIA] = [];
+                }
+                groupedData[item.CATEGORIA].push(item);
+            });
+            
+            // Create table
+            const table = document.createElement('table');
+            
+            // Table header
+            const thead = document.createElement('thead');
+            thead.innerHTML = `
+                <tr>
+                    <th>PUESTO</th>
+                    <th>EQUIPO</th>
+                    <th>CATEGORÍA</th>
+                    <th>LIFT ATLETA 1</th>
+                    <th>LIFT ATLETA 2</th>
+                    <th>LIFT ATLETA 3</th>
+                    <th>TOTAL PESO</th>
+                    <th>PUNTOS</th>
+                </tr>
+            `;
+            table.appendChild(thead);
+            
+            // Table body
+            const tbody = document.createElement('tbody');
+            
+            // Add data for each category
+            for (const category in groupedData) {
+                // Category header
+                const headerRow = document.createElement('tr');
+                headerRow.className = 'category-header';
+                headerRow.innerHTML = `<td colspan="8">${category}</td>`;
+                tbody.appendChild(headerRow);
+                
+                // Teams in this category
+                groupedData[category].forEach(team => {
+                    const row = document.createElement('tr');
+                    row.setAttribute('data-category', category);
+                    row.innerHTML = `
+                        <td>${team.PUESTO || '-'}</td>
+                        <td>${team.TEAM}</td>
+                        <td>${team.CATEGORIA}</td>
+                        <td>${team['LIFT ATLETA 1'] || 0}</td>
+                        <td>${team['LIFT ATLETA 2'] || 0}</td>
+                        <td>${team['LIFT ATLETA 3'] || 0}</td>
+                        <td>${team['TOTAL PESO'] || 0}</td>
+                        <td><strong>${team['TOTAL PUNTOS'] || 0}</strong></td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+            
+            table.appendChild(tbody);
+            container.appendChild(table);
+        }
+
+        // Display WOD 3 data
+        function displayWod3(data, container) {
+            // Group by category
+            const groupedData = {};
+            data.forEach(item => {
+                if (!groupedData[item.CATEGORIA]) {
+                    groupedData[item.CATEGORIA] = [];
+                }
+                groupedData[item.CATEGORIA].push(item);
+            });
+            
+            // Create table
+            const table = document.createElement('table');
+            
+            // Table header
+            const thead = document.createElement('thead');
+            thead.innerHTML = `
+                <tr>
+                    <th>PUESTO</th>
+                    <th>EQUIPO</th>
+                    <th>CATEGORÍA</th>
+                    <th>TIEMPO</th>
+                    <th>PUNTOS</th>
+                </tr>
+            `;
+            table.appendChild(thead);
+            
+            // Table body
+            const tbody = document.createElement('tbody');
+            
+            // Add data for each category
+            for (const category in groupedData) {
+                // Category header
+                const headerRow = document.createElement('tr');
+                headerRow.className = 'category-header';
+                headerRow.innerHTML = `<td colspan="5">${category}</td>`;
+                tbody.appendChild(headerRow);
+                
+                // Teams in this category
+                groupedData[category].forEach(team => {
+                    const row = document.createElement('tr');
+                    row.setAttribute('data-category', category);
+                    row.innerHTML = `
+                        <td>${team.PUESTO || '-'}</td>
+                        <td>${team.TEAM}</td>
+                        <td>${team.CATEGORIA}</td>
+                        <td>${formatTime(team['TIEMPO '])}</td>
+                        <td><strong>${team.PUNTOS || 0}</strong></td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+            
+            table.appendChild(tbody);
+            container.appendChild(table);
+        }
+
+        // Display WOD 4 data
+        function displayWod4(data, container) {
+            // Group by category
+            const groupedData = {};
+            data.forEach(item => {
+                if (!groupedData[item.CATEGORIA]) {
+                    groupedData[item.CATEGORIA] = [];
+                }
+                groupedData[item.CATEGORIA].push(item);
+            });
+            
+            // Create table
+            const table = document.createElement('table');
+            
+            // Table header
+            const thead = document.createElement('thead');
+            thead.innerHTML = `
+                <tr>
+                    <th>PUESTO</th>
+                    <th>EQUIPO</th>
+                    <th>CATEGORÍA</th>
+                    <th>REPS</th>
+                    <th>TIEBREAK</th>
+                    <th>PUNTOS</th>
+                </tr>
+            `;
+            table.appendChild(thead);
+            
+            // Table body
+            const tbody = document.createElement('tbody');
+            
+            // Add data for each category
+            for (const category in groupedData) {
+                // Category header
+                const headerRow = document.createElement('tr');
+                headerRow.className = 'category-header';
+                headerRow.innerHTML = `<td colspan="6">${category}</td>`;
+                tbody.appendChild(headerRow);
+                
+                // Teams in this category
+                groupedData[category].forEach(team => {
+                    const row = document.createElement('tr');
+                    row.setAttribute('data-category', category);
+                    row.innerHTML = `
+                        <td>${team.PUESTO || '-'}</td>
+                        <td>${team.TEAM}</td>
+                        <td>${team.CATEGORIA}</td>
+                        <td>${team.REPS || 0}</td>
+                        <td>${formatTime(team.TIEBREAK)}</td>
+                        <td><strong>${team.PUNTOS || 0}</strong></td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+            
+            table.appendChild(tbody);
+            container.appendChild(table);
+        }
+
+        // Helper function to format time values
+        function formatTime(time) {
+            if (time === 0 || time === "0" || !time) return "0:00";
+            
+            // If it's a number (like 12.2 meaning 12:20)
+            if (typeof time === 'number') {
+                const parts = time.toString().split('.');
+                const minutes = parts[0];
+                const seconds = parts[1] ? parts[1].padEnd(2, '0') : '00';
+                return `${minutes}:${seconds}`;
+            }
+            
+            // If it's already in time format (like "12:30")
+            if (typeof time === 'string' && time.includes(':')) {
+                return time;
+            }
+            
+            return time;
+        }
+    </script>
+</body>
+</html>

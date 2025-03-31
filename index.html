@@ -76,6 +76,10 @@
             position: sticky;
             top: 0;
         }
+        tbody td {
+            border-left: 1px solid #ddd;
+            border-right: 1px solid #ddd;
+        }
         tr:nth-child(even):not(.category-header) {
             background-color: #f9f9f9;
         }
@@ -168,21 +172,18 @@
                 // Remove active class from all tabs and content
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                 document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                
+
                 // Add active class to clicked tab and corresponding content
                 tab.classList.add('active');
                 const tabId = tab.getAttribute('data-tab');
                 document.getElementById(tabId).classList.add('active');
-                
+
                 // Load data if not already loaded
                 if (!document.getElementById(tabId).hasAttribute('data-loaded')) {
                     loadData(tabId);
                 }
             });
         });
-
-        // Load data for the active tab initially
-        loadData('leaderboard');
 
         // Function to load data from API
         function loadData(tabId) {
@@ -211,18 +212,23 @@
                             break;
                         case 'wod1':
                             displayWod1(data.rows, contentDiv);
+                            updateTabVisibility('wod1', data.rows);
                             break;
                         case 'wod2':
                             displayWod2(data.rows, contentDiv);
+                            updateTabVisibility('wod2', data.rows);
                             break;
                         case 'wod2-1':
                             displayWod21(data.rows, contentDiv);
+                            updateTabVisibility('wod2-1', data.rows);
                             break;
                         case 'wod3':
                             displayWod3(data.rows, contentDiv);
+                            updateTabVisibility('wod3', data.rows);
                             break;
                         case 'wod4':
                             displayWod4(data.rows, contentDiv);
+                            updateTabVisibility('wod4', data.rows);
                             break;
                     }
                     
@@ -234,6 +240,53 @@
                     contentDiv.innerHTML = `<div class="error">Error al cargar los datos: ${error.message}</div>`;
                 });
         }
+
+        // Función para actualizar visibilidad de pestañas
+        function updateTabVisibility(tabId, data) {
+            const tabElement = document.querySelector(`.tab[data-tab="${tabId}"]`);
+            
+            // Calcular suma total de puntos para este WOD
+            let totalPoints = 0;
+            
+            if (tabId === 'wod1') {
+                totalPoints = data.reduce((sum, item) => sum + (parseInt(item.PUNTOS) || 0), 0);
+            } 
+            else if (tabId === 'wod2') {
+                totalPoints = data.reduce((sum, item) => sum + (parseInt(item.PUNTOS) || 0), 0);
+            }
+            else if (tabId === 'wod2-1') {
+                totalPoints = data.reduce((sum, item) => sum + (parseInt(item.PUNTOS) || 0), 0);
+            }
+            else if (tabId === 'wod3') {
+                totalPoints = data.reduce((sum, item) => sum + (parseInt(item.PUNTOS) || 0), 0);
+            }
+            else if (tabId === 'wod4') {
+                totalPoints = data.reduce((sum, item) => sum + (parseInt(item.PUNTOS) || 0), 0);
+            }
+            
+            // Mostrar u ocultar pestaña según el total de puntos
+            if (totalPoints > 0) {
+                tabElement.style.display = '';
+            } else {
+                tabElement.style.display = 'none';
+                
+                // Si la pestaña activa está siendo ocultada, mostrar el leaderboard
+                if (tabElement.classList.contains('active')) {
+                    document.querySelector('.tab[data-tab="leaderboard"]').click();
+                }
+            }
+        }
+
+        // Modificar el evento de carga inicial para cargar todos los WODs
+        document.addEventListener('DOMContentLoaded', () => {
+            // Cargar el leaderboard primero
+            loadData('leaderboard');
+            
+            // Cargar los WODs después
+            ['wod1', 'wod2', 'wod2-1', 'wod3', 'wod4'].forEach(tabId => {
+                loadData(tabId);
+            });
+        });
 
         // Add category filter dropdown
         function addCategoryFilter(data, container, tabId) {
@@ -316,7 +369,14 @@
                 headerRow.innerHTML = `<td colspan="8">${category}</td>`;
                 tbody.appendChild(headerRow);
                 
-                // Teams in this category
+                // Sort teams by PUESTO (ascending)
+                groupedData[category].sort((a, b) => {
+                    const puestoA = parseInt(a.PUESTO) || Infinity;
+                    const puestoB = parseInt(b.PUESTO) || Infinity;
+                    return puestoA - puestoB;
+                });
+                
+                // Teams in this category (now sorted)
                 groupedData[category].forEach(team => {
                     const row = document.createElement('tr');
                     row.setAttribute('data-category', category);
@@ -376,7 +436,14 @@
                 headerRow.innerHTML = `<td colspan="5">${category}</td>`;
                 tbody.appendChild(headerRow);
                 
-                // Teams in this category
+                // Sort teams by PUESTO (ascending)
+                groupedData[category].sort((a, b) => {
+                    const puestoA = parseInt(a.PUESTO) || Infinity;
+                    const puestoB = parseInt(b.PUESTO) || Infinity;
+                    return puestoA - puestoB;
+                });
+                
+                // Teams in this category (now sorted)
                 groupedData[category].forEach(team => {
                     const row = document.createElement('tr');
                     row.setAttribute('data-category', category);
@@ -415,13 +482,13 @@
                 <tr>
                     <th>PUESTO</th>
                     <th>EQUIPO</th>
-                    <th>REPS AMRAP 1</th>
-                    <th>PUNTOS A1</th>
-                    <th>REPS AMRAP 2</th>
-                    <th>PUNTOS A2</th>
-                    <th>REPS AMRAP 3</th>
-                    <th>PUNTOS A3</th>
-                    <th>TOTAL PUNTOS</th>
+                    <th>REPS A1</th>
+                    <th>PTS A1</th>
+                    <th>REPS A2</th>
+                    <th>PTS A2</th>
+                    <th>REPS A3</th>
+                    <th>PTS A3</th>
+                    <th>PUNTOS</th>
                 </tr>
             `;
             table.appendChild(thead);
@@ -437,7 +504,14 @@
                 headerRow.innerHTML = `<td colspan="9">${category}</td>`;
                 tbody.appendChild(headerRow);
                 
-                // Teams in this category
+                // Sort teams by PUESTO (ascending)
+                groupedData[category].sort((a, b) => {
+                    const puestoA = parseInt(a.PUESTO) || Infinity;
+                    const puestoB = parseInt(b.PUESTO) || Infinity;
+                    return puestoA - puestoB;
+                });
+                
+                // Teams in this category (now sorted)
                 groupedData[category].forEach(team => {
                     const row = document.createElement('tr');
                     row.setAttribute('data-category', category);
@@ -450,7 +524,7 @@
                         <td>${team['PUNTOS A2'] || 0}</td>
                         <td>${team['REPS AMRAP 3'] || 0}</td>
                         <td>${team['PUNTOS A3'] || 0}</td>
-                        <td><strong>${team['TOTAL PUNTOS'] || 0}</strong></td>
+                        <td><strong>${team['PUNTOS'] || 0}</strong></td>
                     `;
                     tbody.appendChild(row);
                 });
@@ -480,9 +554,9 @@
                 <tr>
                     <th>PUESTO</th>
                     <th>EQUIPO</th>
-                    <th>LIFT ATLETA 1</th>
-                    <th>LIFT ATLETA 2</th>
-                    <th>LIFT ATLETA 3</th>
+                    <th>LIFT ATL 1</th>
+                    <th>LIFT ATL 2</th>
+                    <th>LIFT ATL 3</th>
                     <th>TOTAL PESO</th>
                     <th>PUNTOS</th>
                 </tr>
@@ -500,7 +574,14 @@
                 headerRow.innerHTML = `<td colspan="7">${category}</td>`;
                 tbody.appendChild(headerRow);
                 
-                // Teams in this category
+                // Sort teams by PUESTO (ascending)
+                groupedData[category].sort((a, b) => {
+                    const puestoA = parseInt(a.PUESTO) || Infinity;
+                    const puestoB = parseInt(b.PUESTO) || Infinity;
+                    return puestoA - puestoB;
+                });
+                
+                // Teams in this category (now sorted)
                 groupedData[category].forEach(team => {
                     const row = document.createElement('tr');
                     row.setAttribute('data-category', category);
@@ -511,7 +592,7 @@
                         <td>${team['LIFT ATLETA 2'] || 0}</td>
                         <td>${team['LIFT ATLETA 3'] || 0}</td>
                         <td>${team['TOTAL PESO'] || 0}</td>
-                        <td><strong>${team['TOTAL PUNTOS'] || 0}</strong></td>
+                        <td><strong>${team['PUNTOS'] || 0}</strong></td>
                     `;
                     tbody.appendChild(row);
                 });
@@ -558,7 +639,14 @@
                 headerRow.innerHTML = `<td colspan="4">${category}</td>`;
                 tbody.appendChild(headerRow);
                 
-                // Teams in this category
+                // Sort teams by PUESTO (ascending)
+                groupedData[category].sort((a, b) => {
+                    const puestoA = parseInt(a.PUESTO) || Infinity;
+                    const puestoB = parseInt(b.PUESTO) || Infinity;
+                    return puestoA - puestoB;
+                });
+                
+                // Teams in this category (now sorted)
                 groupedData[category].forEach(team => {
                     const row = document.createElement('tr');
                     row.setAttribute('data-category', category);
@@ -597,7 +685,6 @@
                     <th>PUESTO</th>
                     <th>EQUIPO</th>
                     <th>REPS</th>
-                    <th>TIEBREAK</th>
                     <th>PUNTOS</th>
                 </tr>
             `;
@@ -614,7 +701,14 @@
                 headerRow.innerHTML = `<td colspan="5">${category}</td>`;
                 tbody.appendChild(headerRow);
                 
-                // Teams in this category
+                // Sort teams by PUESTO (ascending)
+                groupedData[category].sort((a, b) => {
+                    const puestoA = parseInt(a.PUESTO) || Infinity;
+                    const puestoB = parseInt(b.PUESTO) || Infinity;
+                    return puestoA - puestoB;
+                });
+                
+                // Teams in this category (now sorted)
                 groupedData[category].forEach(team => {
                     const row = document.createElement('tr');
                     row.setAttribute('data-category', category);
@@ -622,7 +716,6 @@
                         <td>${team.PUESTO || '-'}</td>
                         <td>${team.TEAM}</td>
                         <td>${team.REPS || 0}</td>
-                        <td>${formatTime(team.TIEBREAK)}</td>
                         <td><strong>${team.PUNTOS || 0}</strong></td>
                     `;
                     tbody.appendChild(row);

@@ -3,13 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Competencia CrossFit</title>
+    <title>TRopical Challenge Leaderboard</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Boldonse&display=swap');
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Boldonse', sans-serif;
+            font-weight: 400;
+            font-style: normal;
             margin: 0;
             padding: 20px;
-            background-color: #f5f5f5;
+            background-color: #2b3e17;
             color: #333;
         }
         .container {
@@ -22,12 +25,12 @@
         }
         h1 {
             text-align: center;
-            color: #e74c3c;
+            text-transform: uppercase;
+            color: #436023;
             margin-bottom: 30px;
         }
         .tabs {
             display: flex;
-            margin-bottom: 20px;
             border-bottom: 1px solid #ddd;
         }
         .tab {
@@ -44,15 +47,14 @@
             background-color: #ddd;
         }
         .tab.active {
-            background-color: #e74c3c;
+            background-color: #436023;
             color: white;
-            border-color: #e74c3c;
+            border-color: #436023;
         }
         .tab-content {
             display: none;
             padding: 20px;
             border: 1px solid #ddd;
-            border-top: none;
             border-radius: 0 0 5px 5px;
         }
         .tab-content.active {
@@ -69,7 +71,7 @@
             border-bottom: 1px solid #ddd;
         }
         th {
-            background-color: #e74c3c;
+            background-color: #436023;
             color: white;
             position: sticky;
             top: 0;
@@ -77,13 +79,20 @@
         tr:nth-child(even):not(.category-header) {
             background-color: #f9f9f9;
         }
+        tr:nth-child(odd):not(.category-header) {
+            background-color: white;
+        }
         tr:hover:not(.category-header) {
             background-color: #f1f1f1;
         }
         .category-header {
-            background-color: #3498db;
+            background-color: #76aa3b;
             color: white;
             font-weight: bold;
+            text-transform: uppercase;
+        }
+        .category-header td {
+            text-align: center;
         }
         .loading {
             text-align: center;
@@ -92,7 +101,7 @@
             color: #777;
         }
         .error {
-            color: #e74c3c;
+            color: #76aa3b;
             text-align: center;
             padding: 20px;
         }
@@ -106,7 +115,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Competencia CrossFit</h1>
+        <h1>🏆 TRopical Challenge 🏆</h1>
         
         <div class="tabs">
             <div class="tab active" data-tab="leaderboard">Leaderboard</div>
@@ -244,7 +253,7 @@
             // Add event listener for filter
             document.getElementById('category-filter').addEventListener('change', function() {
                 const selectedCategory = this.value;
-                const table = container.querySelector('table');
+                const table = container.querySelector('tbody');
                 
                 if (selectedCategory === 'all') {
                     // Show all rows
@@ -286,7 +295,6 @@
                 <tr>
                     <th>PUESTO</th>
                     <th>EQUIPO</th>
-                    <th>CATEGORÍA</th>
                     <th>WOD 1</th>
                     <th>WOD 2</th>
                     <th>WOD 2.1</th>
@@ -305,7 +313,7 @@
                 // Category header
                 const headerRow = document.createElement('tr');
                 headerRow.className = 'category-header';
-                headerRow.innerHTML = `<td colspan="9">${category}</td>`;
+                headerRow.innerHTML = `<td colspan="8">${category}</td>`;
                 tbody.appendChild(headerRow);
                 
                 // Teams in this category
@@ -315,7 +323,6 @@
                     row.innerHTML = `
                         <td>${team.PUESTO}</td>
                         <td>${team.TEAM}</td>
-                        <td>${team.CATEGORIA}</td>
                         <td>${team['WOD 1'] || 0}</td>
                         <td>${team['WOD 2'] || 0}</td>
                         <td>${team['WOD 2.1'] || 0}</td>
@@ -351,7 +358,6 @@
                 <tr>
                     <th>PUESTO</th>
                     <th>EQUIPO</th>
-                    <th>CATEGORÍA</th>
                     <th>TIEMPO</th>
                     <th>TIEBREAK</th>
                     <th>PUNTOS</th>
@@ -367,7 +373,7 @@
                 // Category header
                 const headerRow = document.createElement('tr');
                 headerRow.className = 'category-header';
-                headerRow.innerHTML = `<td colspan="6">${category}</td>`;
+                headerRow.innerHTML = `<td colspan="5">${category}</td>`;
                 tbody.appendChild(headerRow);
                 
                 // Teams in this category
@@ -377,7 +383,6 @@
                     row.innerHTML = `
                         <td>${team.PUESTO}</td>
                         <td>${team.TEAM}</td>
-                        <td>${team.CATEGORIA}</td>
                         <td>${formatTime(team['TIEMPO '])}</td>
                         <td>${formatTime(team.TIEBREAK)}</td>
                         <td>${team.PUNTOS || 0}</td>
@@ -410,7 +415,6 @@
                 <tr>
                     <th>PUESTO</th>
                     <th>EQUIPO</th>
-                    <th>CATEGORÍA</th>
                     <th>REPS AMRAP 1</th>
                     <th>PUNTOS A1</th>
                     <th>REPS AMRAP 2</th>
@@ -430,7 +434,7 @@
                 // Category header
                 const headerRow = document.createElement('tr');
                 headerRow.className = 'category-header';
-                headerRow.innerHTML = `<td colspan="10">${category}</td>`;
+                headerRow.innerHTML = `<td colspan="9">${category}</td>`;
                 tbody.appendChild(headerRow);
                 
                 // Teams in this category
@@ -440,7 +444,6 @@
                     row.innerHTML = `
                         <td>${team.PUESTO || '-'}</td>
                         <td>${team.TEAM}</td>
-                        <td>${team.CATEGORIA}</td>
                         <td>${team['REPS AMRAP 1'] || 0}</td>
                         <td>${team['PUNTOS A1'] || 0}</td>
                         <td>${team['REPS AMRAP 2'] || 0}</td>
@@ -477,7 +480,6 @@
                 <tr>
                     <th>PUESTO</th>
                     <th>EQUIPO</th>
-                    <th>CATEGORÍA</th>
                     <th>LIFT ATLETA 1</th>
                     <th>LIFT ATLETA 2</th>
                     <th>LIFT ATLETA 3</th>
@@ -495,7 +497,7 @@
                 // Category header
                 const headerRow = document.createElement('tr');
                 headerRow.className = 'category-header';
-                headerRow.innerHTML = `<td colspan="8">${category}</td>`;
+                headerRow.innerHTML = `<td colspan="7">${category}</td>`;
                 tbody.appendChild(headerRow);
                 
                 // Teams in this category
@@ -505,7 +507,6 @@
                     row.innerHTML = `
                         <td>${team.PUESTO || '-'}</td>
                         <td>${team.TEAM}</td>
-                        <td>${team.CATEGORIA}</td>
                         <td>${team['LIFT ATLETA 1'] || 0}</td>
                         <td>${team['LIFT ATLETA 2'] || 0}</td>
                         <td>${team['LIFT ATLETA 3'] || 0}</td>
@@ -540,7 +541,6 @@
                 <tr>
                     <th>PUESTO</th>
                     <th>EQUIPO</th>
-                    <th>CATEGORÍA</th>
                     <th>TIEMPO</th>
                     <th>PUNTOS</th>
                 </tr>
@@ -555,7 +555,7 @@
                 // Category header
                 const headerRow = document.createElement('tr');
                 headerRow.className = 'category-header';
-                headerRow.innerHTML = `<td colspan="5">${category}</td>`;
+                headerRow.innerHTML = `<td colspan="4">${category}</td>`;
                 tbody.appendChild(headerRow);
                 
                 // Teams in this category
@@ -565,7 +565,6 @@
                     row.innerHTML = `
                         <td>${team.PUESTO || '-'}</td>
                         <td>${team.TEAM}</td>
-                        <td>${team.CATEGORIA}</td>
                         <td>${formatTime(team['TIEMPO '])}</td>
                         <td><strong>${team.PUNTOS || 0}</strong></td>
                     `;
@@ -597,7 +596,6 @@
                 <tr>
                     <th>PUESTO</th>
                     <th>EQUIPO</th>
-                    <th>CATEGORÍA</th>
                     <th>REPS</th>
                     <th>TIEBREAK</th>
                     <th>PUNTOS</th>
@@ -613,7 +611,7 @@
                 // Category header
                 const headerRow = document.createElement('tr');
                 headerRow.className = 'category-header';
-                headerRow.innerHTML = `<td colspan="6">${category}</td>`;
+                headerRow.innerHTML = `<td colspan="5">${category}</td>`;
                 tbody.appendChild(headerRow);
                 
                 // Teams in this category
@@ -623,7 +621,6 @@
                     row.innerHTML = `
                         <td>${team.PUESTO || '-'}</td>
                         <td>${team.TEAM}</td>
-                        <td>${team.CATEGORIA}</td>
                         <td>${team.REPS || 0}</td>
                         <td>${formatTime(team.TIEBREAK)}</td>
                         <td><strong>${team.PUNTOS || 0}</strong></td>

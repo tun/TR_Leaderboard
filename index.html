@@ -423,7 +423,7 @@
                 <tr>
                     <th>PUESTO</th>
                     <th>EQUIPO</th>
-                    <th>TIEMPO</th>
+                    <th>REPS</th>
                     <th>TIEBREAK</th>
                     <th>PUNTOS</th>
                 </tr>
@@ -455,7 +455,7 @@
                     row.innerHTML = `
                         <td>${team.PUESTO}</td>
                         <td>${team.TEAM}</td>
-                        <td>${formatTime(team['TIEMPO '])}</td>
+                        <td>${team['TIEMPO '] || 0}</td>
                         <td>${formatTime(team.TIEBREAK)}</td>
                         <td>${team.PUNTOS || 0}</td>
                     `;
